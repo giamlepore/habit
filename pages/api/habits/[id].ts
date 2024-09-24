@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: { name, icon, time, streak, consistency, checkIns, calendar },
         })
         res.status(200).json(habit)
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: 'Error updating habit' })
       }
       break
@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         await prisma.habit.delete({ where: { id: habitId } })
         res.status(204).end()
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: 'Error deleting habit' })
       }
       break

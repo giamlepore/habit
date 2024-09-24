@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           where: { userId: session.user.id },
         })
         res.status(200).json(habits)
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: 'Error fetching habits' })
       }
       break
@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
         })
         res.status(201).json(habit)
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: 'Error creating habit' })
       }
       break

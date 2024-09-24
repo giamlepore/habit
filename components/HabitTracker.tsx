@@ -4,7 +4,7 @@ import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check } from
 import { motion } from 'framer-motion'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameYear } from 'date-fns'
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth } from 'date-fns'
 
 interface Habit {
   id: string
