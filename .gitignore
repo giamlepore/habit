@@ -27,7 +27,10 @@ yarn-error.log*
 
 # local env files
 .env*.local
+<<<<<<< HEAD
 .env
+=======
+>>>>>>> parent of 5aff2c7 (trying again)
 
 # vercel
 .vercel
