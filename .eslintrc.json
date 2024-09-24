@@ -3,5 +3,13 @@
   "rules": {
     "react/no-unescaped-entities": "off",
     "@next/next/no-page-custom-font": "off"
+},
+
+"eslintConfig": {
+    "extends": "react-app",
+    "rules": {
+        "no-var": 0,
+        "@typescript-eslint/no-unused-vars": "off"
+    }
 }
 }
