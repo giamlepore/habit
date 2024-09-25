@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
@@ -185,7 +185,7 @@ export default function HabitTracker() {
       <div className="mt-4">
         <div className="flex justify-between items-center mb-2">
           <button
-            className="p-1 rounded-full hover:bg-gray-200"
+            className="p-1 rounded-full hover:bg-gray-200 text-black"
             onClick={() => {
               const newDate = new Date(currentDate)
               if (calendarView === 'week') newDate.setDate(newDate.getDate() - 7)
@@ -200,17 +200,17 @@ export default function HabitTracker() {
             <Select.Trigger className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium bg-white text-gray-800 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75">
               <Select.Value placeholder="Select view" />
               <Select.Icon className="ml-2">
-                <ChevronRight className="h-4 w-4" />
+                <ChevronUpCircle className="h-4 w-4" />
               </Select.Icon>
             </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="week">Week</Select.Item>
-              <Select.Item value="month">Month</Select.Item>
-              <Select.Item value="year">Year</Select.Item>
+            <Select.Content className="bg-white text-black rounded-md shadow-lg items-center">
+              <Select.Item value="week" className="cursor-pointer p-2 hover:bg-gray-100">Week</Select.Item>
+              <Select.Item value="month" className="cursor-pointer p-2 hover:bg-gray-100">Month</Select.Item>
+              <Select.Item value="year" className="cursor-pointer p-2 hover:bg-gray-100">Year</Select.Item>
             </Select.Content>
           </Select.Root>
           <button
-            className="p-1 rounded-full hover:bg-gray-200"
+            className="p-1 rounded-full text-black hover:bg-gray-200"
             onClick={() => {
               const newDate = new Date(currentDate)
               if (calendarView === 'week') newDate.setDate(newDate.getDate() + 7)
@@ -222,7 +222,7 @@ export default function HabitTracker() {
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        <div className="grid grid-cols-7 gap-1">
+        <div className={`grid gap-0.5 ${calendarView === 'year' ? 'grid-cols-12' : 'grid-cols-7'}`}>
           {calendarView === 'week' && DAYS.map(day => (
             <div key={day} className="text-center text-xs text-gray-500">{day}</div>
           ))}
@@ -234,7 +234,7 @@ export default function HabitTracker() {
                 key={dateString}
                 className={`h-6 w-full rounded ${
                   status === 'check-in' ? 'bg-green-500' :
-                  status === 'miss' ? 'bg-red-500' :
+                  status === 'miss' ? 'bg-red-500 bg-opacity-50' :
                   status === 'day-off' ? 'bg-gray-500' :
                   'bg-gray-200'
                 }`}
@@ -281,9 +281,9 @@ export default function HabitTracker() {
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
                 <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl">
-                  <Dialog.Title className="text-lg font-bold mb-4">Add New Habit</Dialog.Title>
+                  <Dialog.Title className="text-lg text-gray-400 font-bold mb-4">Add New Habit</Dialog.Title>
                   <input
-                    className="w-full p-2 mb-4 border rounded"
+                    className="w-full p-2 mb-4 border rounded text-gray-500"
                     placeholder="Habit name"
                     value={newHabit.name}
                     onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
@@ -304,10 +304,10 @@ export default function HabitTracker() {
               </Dialog.Portal>
             </Dialog.Root>
             <button
-              className="p-2 rounded-full bg-gray-200 hover:bg-gray-300"
+              className="p-2 rounded-full bg-gray-400 hover:bg-gray-300"
               onClick={() => signOut()}
             >
-              <Settings className="h-4 w-4" />
+              <LogOutIcon className="h-4 w-4" />
             </button>
           </div>
         </header>
