@@ -1,11 +1,32 @@
 import React, { useEffect, useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon, Sun, Moon } from 'lucide-react'
+import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon, Sun, Moon, BarChart2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth } from 'date-fns'
 import confetti from 'canvas-confetti'
+import { Line } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 interface Habit {
   id: string
@@ -29,6 +50,9 @@ export default function HabitTracker() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [darkMode, setDarkMode] = useState(false)
   const [loadingConsistency, setLoadingConsistency] = useState(false)
+  const [showStatsModal, setShowStatsModal] = useState(false)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
 
   useEffect(() => {
     if (session) {
@@ -65,6 +89,8 @@ export default function HabitTracker() {
         const habit = await response.json()
         setHabits([...habits, habit])
         setNewHabit({ name: '', icon: '' })
+        setShowSuccessMessage(true)
+        setTimeout(() => setShowSuccessMessage(false), 3000)
       }
     }
   }
@@ -88,6 +114,7 @@ export default function HabitTracker() {
     })
     if (response.ok) {
       setHabits(habits.filter(habit => habit.id !== id))
+      setHabitToDelete(null)
     }
   }
 
@@ -276,6 +303,61 @@ export default function HabitTracker() {
     )
   }
 
+  const renderStatsChart = () => {
+    let startDate: Date
+    let endDate: Date
+
+    switch (calendarView) {
+      case 'week':
+        startDate = startOfWeek(currentDate)
+        endDate = endOfWeek(currentDate)
+        break
+      case 'month':
+        startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+        endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+        break
+      case 'year':
+        startDate = new Date(currentDate.getFullYear(), 0, 1)
+        endDate = new Date(currentDate.getFullYear(), 11, 31)
+        break
+    }
+
+    const days = eachDayOfInterval({ start: startDate, end: endDate })
+    const labels = days.map(day => format(day, 'MMM dd'))
+    const data = days.map(day => {
+      const dateString = day.toISOString().split('T')[0]
+      return habits.filter(habit => habit.calendar[dateString] === 'check-in').length
+    })
+
+    const chartData = {
+      labels,
+      datasets: [
+        {
+          label: 'Completed Habits',
+          data,
+          fill: false,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1
+        }
+      ]
+    }
+
+    const options = {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top' as const,
+        },
+        title: {
+          display: true,
+          text: 'Completed Habits Over Time'
+        }
+      }
+    }
+
+    return <Line data={chartData} options={options} />
+  }
+
   if (!session) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -309,6 +391,12 @@ export default function HabitTracker() {
             >
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+            <button
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-400 hover:bg-gray-300'}`}
+              onClick={() => setShowStatsModal(true)}
+            >
+              <BarChart2 className="h-4 w-4" />
+            </button>
             <Dialog.Root>
               <Dialog.Trigger asChild>
                 <button className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600">
@@ -337,6 +425,12 @@ export default function HabitTracker() {
                   >
                     Add Habit
                   </button>
+                  {showSuccessMessage && (
+                    <div className="mt-4 p-2 bg-green-500 text-white rounded flex items-center justify-center">
+                      <Check className="h-4 w-4 mr-2" />
+                      Habit added successfully!
+                    </div>
+                  )}
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>
@@ -404,12 +498,41 @@ export default function HabitTracker() {
                       </Dialog.Content>
                     </Dialog.Portal>
                   </Dialog.Root>
-                  <button
-                    className="p-1 rounded-full hover:bg-gray-100"
-                    onClick={() => removeHabit(habit.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <Dialog.Root>
+                    <Dialog.Trigger asChild>
+                      <button
+                        className="p-1 rounded-full hover:bg-gray-100"
+                        onClick={() => setHabitToDelete(habit)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </Dialog.Trigger>
+                    <Dialog.Portal>
+                      <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+                      <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl`}>
+                        <Dialog.Title className="text-lg font-bold mb-4">Delete Habit</Dialog.Title>
+                        <p>Are you sure you want to delete this habit?</p>
+                        <div className="mt-4 flex justify-end gap-2">
+                          <button
+                            className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+                            onClick={() => setHabitToDelete(null)}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                            onClick={() => {
+                              if (habitToDelete) {
+                                removeHabit(habitToDelete.id)
+                              }
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </Dialog.Content>
+                    </Dialog.Portal>
+                  </Dialog.Root>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4 text-center mb-4">
@@ -433,6 +556,32 @@ export default function HabitTracker() {
           ))}
         </div>
       </div>
+      <Dialog.Root open={showStatsModal} onOpenChange={setShowStatsModal}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+          <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl w-11/12 max-w-4xl`}>
+            <Dialog.Title className="text-lg font-bold mb-4">Habit Statistics</Dialog.Title>
+            <div className="mb-4">
+              <select
+                className={`inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75`}
+                value={calendarView}
+                onChange={(e) => setCalendarView(e.target.value as 'week' | 'month' | 'year')}
+              >
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                <option value="year">Year</option>
+              </select>
+            </div>
+            {renderStatsChart()}
+            <button
+              className="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={() => setShowStatsModal(false)}
+            >
+              Close
+            </button>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
