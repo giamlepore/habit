@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon } from 'lucide-react'
+import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon, Sun, Moon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
@@ -27,12 +27,24 @@ export default function HabitTracker() {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
   const [calendarView, setCalendarView] = useState<'week' | 'month' | 'year'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [darkMode, setDarkMode] = useState(false)
+  const [loadingConsistency, setLoadingConsistency] = useState(false)
 
   useEffect(() => {
     if (session) {
       fetchHabits()
     }
   }, [session])
+
+  useEffect(() => {
+    setLoadingConsistency(true)
+    setTimeout(() => {
+      habits.forEach(habit => {
+        habit.consistency = calculateConsistency(habit, calendarView, currentDate)
+      })
+      setLoadingConsistency(false)
+    }, 500)
+  }, [calendarView])
 
   const fetchHabits = async () => {
     const response = await fetch('/api/habits')
@@ -197,19 +209,15 @@ export default function HabitTracker() {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <Select.Root value={calendarView} onValueChange={(value: 'week' | 'month' | 'year') => setCalendarView(value)}>
-            <Select.Trigger className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium bg-white text-gray-800 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75">
-              <Select.Value placeholder="Select view" />
-              <Select.Icon className="ml-2">
-                <ChevronUpCircle className="h-4 w-4" />
-              </Select.Icon>
-            </Select.Trigger>
-            <Select.Content className="bg-white text-black rounded-md shadow-lg items-center">
-              <Select.Item value="week" className="cursor-pointer p-2 hover:bg-gray-100">Week</Select.Item>
-              <Select.Item value="month" className="cursor-pointer p-2 hover:bg-gray-100">Month</Select.Item>
-              <Select.Item value="year" className="cursor-pointer p-2 hover:bg-gray-100">Year</Select.Item>
-            </Select.Content>
-          </Select.Root>
+          <select
+            className={`inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75`}
+            value={calendarView}
+            onChange={(e) => setCalendarView(e.target.value as 'week' | 'month' | 'year')}
+          >
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+          </select>
           <button
             className="p-1 rounded-full text-black hover:bg-gray-200"
             onClick={() => {
@@ -243,12 +251,26 @@ export default function HabitTracker() {
               >
                 <span className="text-xs">
                   {calendarView === 'year' 
-                    ? (isSameMonth(date, currentDate) ? format(date, 'd') : '')
+                    ? ''
                     : format(date, 'd')}
                 </span>
               </button>
             )
           })}
+        </div>
+        <div className="flex justify-between text-xs mt-4 text-gray-400">
+          <div className="flex items-center">
+            <div className="h-3 w-3 bg-green-500 rounded-full mr-1"></div>
+            Check-in
+          </div>
+          <div className="flex items-center">
+            <div className="h-3 w-3 bg-red-500 bg-opacity-50 rounded-full mr-1"></div>
+            Miss
+          </div>
+          <div className="flex items-center">
+            <div className="h-3 w-3 bg-gray-500 rounded-full mr-1"></div>
+            Day-off
+          </div>
         </div>
       </div>
     )
@@ -276,11 +298,17 @@ export default function HabitTracker() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className={`min-h-screen p-8 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-black">{habits.length} HABITS</h1>
+          <h1 className="text-2xl font-bold">{habits.length} HABITS</h1>
           <div className="flex gap-2">
+            <button
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-400 hover:bg-gray-300'}`}
+              onClick={() => setDarkMode(!darkMode)}
+            >
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <Dialog.Root>
               <Dialog.Trigger asChild>
                 <button className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600">
@@ -289,16 +317,16 @@ export default function HabitTracker() {
               </Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-                <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl">
-                  <Dialog.Title className="text-lg text-gray-400 font-bold mb-4">Add New Habit</Dialog.Title>
+                <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl`}>
+                  <Dialog.Title className="text-lg font-bold mb-4">Add New Habit</Dialog.Title>
                   <input
-                    className="w-full p-2 mb-4 border rounded text-gray-500"
+                    className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
                     placeholder="Habit name"
                     value={newHabit.name}
                     onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
                   />
                   <input
-                    className="w-full p-2 mb-4 border rounded"
+                    className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
                     placeholder="Habit icon (emoji)"
                     value={newHabit.icon}
                     onChange={(e) => setNewHabit({ ...newHabit, icon: e.target.value })}
@@ -313,7 +341,7 @@ export default function HabitTracker() {
               </Dialog.Portal>
             </Dialog.Root>
             <button
-              className="p-2 rounded-full bg-gray-400 hover:bg-gray-300"
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-400 hover:bg-gray-300'}`}
               onClick={() => signOut()}
             >
               <LogOutIcon className="h-4 w-4" />
@@ -322,12 +350,12 @@ export default function HabitTracker() {
         </header>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {habits.map(habit => (
-            <div key={habit.id} className="bg-white p-4 rounded-lg shadow">
+            <div key={habit.id} className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
               <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2">
                   <span>{habit.icon}</span>
                   <span className="font-semibold">{habit.name}</span>
-                  {habit.time && <span className="text-gray-500 text-sm">{habit.time}</span>}
+                  {habit.time && <span className="text-sm">{habit.time}</span>}
                 </div>
                 <div className="flex gap-2 items-center">
                   <motion.button
@@ -345,7 +373,7 @@ export default function HabitTracker() {
                       <Check className="h-4 w-4 text-white" />
                     )}
                   </motion.button>
-                  <Dialog.Root>
+                  <Dialog.Root open={editingHabit?.id === habit.id} onOpenChange={(open) => setEditingHabit(open ? habit : null)}>
                     <Dialog.Trigger asChild>
                       <button className="p-1 rounded-full hover:bg-gray-100">
                         <Pencil className="h-4 w-4" />
@@ -353,16 +381,16 @@ export default function HabitTracker() {
                     </Dialog.Trigger>
                     <Dialog.Portal>
                       <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-                      <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl">
+                      <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl`}>
                         <Dialog.Title className="text-lg font-bold mb-4">Edit Habit</Dialog.Title>
                         <input
-                          className="w-full p-2 mb-4 border rounded"
+                          className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
                           placeholder="Habit name"
                           value={editingHabit?.name || ''}
                           onChange={(e) => setEditingHabit(prev => prev ? { ...prev, name: e.target.value } : null)}
                         />
                         <input
-                          className="w-full p-2 mb-4 border rounded"
+                          className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
                           placeholder="Habit icon (emoji)"
                           value={editingHabit?.icon || ''}
                           onChange={(e) => setEditingHabit(prev => prev ? { ...prev, icon: e.target.value } : null)}
@@ -384,18 +412,20 @@ export default function HabitTracker() {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4 text-center mb-4 text-gray-500">
+              <div className="grid grid-cols-3 gap-4 text-center mb-4">
                 <div>
                   <div className="text-2xl font-bold">{habit.streak}</div>
-                  <div className="text-gray-500 text-sm">Streak</div>
+                  <div className="text-sm">Streak</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">{habit.consistency}%</div>
-                  <div className="text-gray-500 text-sm">Consistency</div>
+                  <div className="text-2xl font-bold">
+                    {loadingConsistency ? <div className="loader"></div> : `${habit.consistency}%`}
+                  </div>
+                  <div className="text-sm">Consistency</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold">{habit.checkIns}</div>
-                  <div className="text-gray-500 text-sm">Check-ins</div>
+                  <div className="text-sm">Check-ins</div>
                 </div>
               </div>
               {renderCalendar(habit)}
