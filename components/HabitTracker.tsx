@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth } from 'date-fns'
+import confetti from 'canvas-confetti'
 
 interface Habit {
   id: string
@@ -266,6 +267,14 @@ export default function HabitTracker() {
     )
   }
 
+  const triggerConfetti = () => {
+    confetti({
+      particleCount: 200,
+      spread: 400,
+      origin: { y: 0.5 },
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
@@ -327,9 +336,10 @@ export default function HabitTracker() {
                         ? 'bg-green-500 border-green-500'
                         : 'border-gray-300'
                     }`}
-                    onClick={() => toggleTodayCheckIn(habit)}
-                    whileTap={{ scale: 0.9 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    onClick={() => {toggleTodayCheckIn(habit)
+                    triggerConfetti()}}
+                    whileTap={{ scale: 0.8 }}
+                    transition={{ type: "spring", stiffness: 800, damping: 17 }}
                   >
                     {habit.calendar[new Date().toISOString().split('T')[0]] === 'check-in' && (
                       <Check className="h-4 w-4 text-white" />
