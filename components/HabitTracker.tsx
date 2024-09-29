@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon, Sun, Moon, BarChart2 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth } from 'date-fns'
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from 'date-fns'
 import confetti from 'canvas-confetti'
 import { Line } from 'react-chartjs-2'
 import {
@@ -36,10 +36,10 @@ interface Habit {
   streak: number
   consistency: number
   checkIns: number
-  calendar: Record<string, 'check-in' | 'miss' | 'day-off' | null>
+  calendar: Record<string, 'check-in' | 'miss' | 'day-off' | 'special' | null>
 }
 
-const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const DAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
 export default function HabitTracker() {
   const { data: session } = useSession()
@@ -53,6 +53,8 @@ export default function HabitTracker() {
   const [showStatsModal, setShowStatsModal] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
+  const [showSpecialDay, setShowSpecialDay] = useState(false)
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (session) {
@@ -135,22 +137,31 @@ export default function HabitTracker() {
     await editHabit(updatedHabit)
   }
 
-  const toggleTodayCheckIn = async (habit: Habit) => {
+  const toggleTodayCheckIn = async (habit: Habit, isSpecial: boolean = false) => {
     const today = new Date().toISOString().split('T')[0]
     const newCalendar = { ...habit.calendar }
-    if (newCalendar[today] === 'check-in') {
+    if (newCalendar[today] === 'check-in' || newCalendar[today] === 'special') {
       delete newCalendar[today]
     } else {
-      newCalendar[today] = 'check-in'
+      newCalendar[today] = isSpecial ? 'special' : 'check-in'
     }
 
     const updatedHabit = { ...habit, calendar: newCalendar }
     updateHabitStats(updatedHabit)
     await editHabit(updatedHabit)
+
+    if (isSpecial) {
+      setShowSpecialDay(true)
+      triggerConfetti()
+      setTimeout(() => triggerConfetti(), 500)
+      setTimeout(() => setShowSpecialDay(false), 3000)
+    } else {
+      triggerConfetti()
+    }
   }
 
   const updateHabitStats = (habit: Habit) => {
-    const checkIns = Object.values(habit.calendar).filter(v => v === 'check-in').length
+    const checkIns = Object.values(habit.calendar).filter(v => v === 'check-in' || v === 'special').length
     habit.checkIns = checkIns
     habit.consistency = calculateConsistency(habit, calendarView, currentDate)
     habit.streak = calculateStreak(habit)
@@ -163,7 +174,7 @@ export default function HabitTracker() {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
       const dateString = date.toISOString().split('T')[0]
-      if (habit.calendar[dateString] === 'check-in') {
+      if (habit.calendar[dateString] === 'check-in' || habit.calendar[dateString] === 'special') {
         streak++
       } else if (habit.calendar[dateString] !== 'day-off') {
         break
@@ -178,8 +189,8 @@ export default function HabitTracker() {
 
     switch (view) {
       case 'week':
-        startDate = startOfWeek(date)
-        endDate = endOfWeek(date)
+        startDate = startOfWeek(date, { weekStartsOn: 0 })
+        endDate = endOfWeek(date, { weekStartsOn: 0 })
         break
       case 'month':
         startDate = new Date(date.getFullYear(), date.getMonth(), 1)
@@ -194,7 +205,7 @@ export default function HabitTracker() {
     const days = eachDayOfInterval({ start: startDate, end: endDate })
     const totalDays = days.length
     const checkIns = days.filter(day => 
-      habit.calendar[day.toISOString().split('T')[0]] === 'check-in'
+      habit.calendar[day.toISOString().split('T')[0]] === 'check-in' || habit.calendar[day.toISOString().split('T')[0]] === 'special'
     ).length
 
     return Math.round((checkIns / totalDays) * 100) || 0
@@ -206,8 +217,8 @@ export default function HabitTracker() {
 
     switch (calendarView) {
       case 'week':
-        startDate = startOfWeek(currentDate)
-        endDate = endOfWeek(currentDate)
+        startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
+        endDate = endOfWeek(currentDate, { weekStartsOn: 0 })
         break
       case 'month':
         startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
@@ -259,8 +270,10 @@ export default function HabitTracker() {
           </button>
         </div>
         <div className={`grid gap-0.5 ${calendarView === 'year' ? 'grid-cols-12' : 'grid-cols-7'}`}>
-          {calendarView === 'week' && DAYS.map(day => (
-            <div key={day} className="text-center text-xs text-gray-500">{day}</div>
+          {calendarView === 'week' && DAYS.map((day, index) => (
+            <div key={day} className="text-center text-xs text-gray-500">
+              {index === 5 || index === 6 ? day : day[0]}
+            </div>
           ))}
           {days.map(date => {
             const dateString = date.toISOString().split('T')[0]
@@ -270,10 +283,11 @@ export default function HabitTracker() {
                 key={dateString}
                 className={`h-6 w-full rounded ${
                   status === 'check-in' ? 'bg-green-500' :
+                  status === 'special' ? 'bg-green-500 animate-pulse' :
                   status === 'miss' ? 'bg-red-500 bg-opacity-50' :
                   status === 'day-off' ? 'bg-gray-500' :
                   'bg-gray-200'
-                }`}
+                } ${isToday(date) ? 'font-bold' : ''}`}
                 onClick={() => toggleCheckIn(habit, dateString)}
               >
                 <span className="text-xs">
@@ -309,8 +323,8 @@ export default function HabitTracker() {
 
     switch (calendarView) {
       case 'week':
-        startDate = startOfWeek(currentDate)
-        endDate = endOfWeek(currentDate)
+        startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
+        endDate = endOfWeek(currentDate, { weekStartsOn: 0 })
         break
       case 'month':
         startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
@@ -326,7 +340,7 @@ export default function HabitTracker() {
     const labels = days.map(day => format(day, 'MMM dd'))
     const data = days.map(day => {
       const dateString = day.toISOString().split('T')[0]
-      return habits.filter(habit => habit.calendar[dateString] === 'check-in').length
+      return habits.filter(habit => habit.calendar[dateString] === 'check-in' || habit.calendar[dateString] === 'special').length
     })
 
     const chartData = {
@@ -456,14 +470,31 @@ export default function HabitTracker() {
                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                       habit.calendar[new Date().toISOString().split('T')[0]] === 'check-in'
                         ? 'bg-green-500 border-green-500'
+                        : habit.calendar[new Date().toISOString().split('T')[0]] === 'special'
+                        ? 'bg-green-500 border-green-500 animate-pulse'
                         : 'border-gray-300'
                     }`}
-                    onClick={() => {toggleTodayCheckIn(habit)
-                    triggerConfetti()}}
+                    onClick={() => toggleTodayCheckIn(habit)}
+                    onMouseDown={() => {
+                      longPressTimerRef.current = setTimeout(() => {
+                        toggleTodayCheckIn(habit, true)
+                      }, 3000)
+                    }}
+                    onMouseUp={() => {
+                      if (longPressTimerRef.current) {
+                        clearTimeout(longPressTimerRef.current)
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      if (longPressTimerRef.current) {
+                        clearTimeout(longPressTimerRef.current)
+                      }
+                    }}
                     whileTap={{ scale: 0.8 }}
                     transition={{ type: "spring", stiffness: 800, damping: 17 }}
                   >
-                    {habit.calendar[new Date().toISOString().split('T')[0]] === 'check-in' && (
+                    {(habit.calendar[new Date().toISOString().split('T')[0]] === 'check-in' || 
+                      habit.calendar[new Date().toISOString().split('T')[0]] === 'special') && (
                       <Check className="h-4 w-4 text-white" />
                     )}
                   </motion.button>
@@ -582,6 +613,25 @@ export default function HabitTracker() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+      <AnimatePresence>
+        {showSpecialDay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-white text-black p-8 rounded-lg text-2xl font-bold"
+            >
+              Dia Especial
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
