@@ -376,7 +376,7 @@ export default function HabitTracker() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
         <h1 className="mb-8 text-4xl font-bold text-white text-center" style={{ fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji' }}>
-          Um novo jeito de acompanhar seus hábitos
+          Um novo jeito de acompanhar hábitos
         </h1>
         <div className="p-6 rounded-lg shadow-lg bg-gray-800 text-white">
           <div className="flex justify-between items-center mb-4">
