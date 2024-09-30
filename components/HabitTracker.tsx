@@ -628,7 +628,22 @@ export default function HabitTracker() {
               </div>
               <div className="grid grid-cols-3 gap-4 text-center mb-4">
                 <div>
+                  <motion.div 
+                    className={`text-2xl font-bold ${habit.streak >= 3 ? 'text-orange-500' : ''}`}
+                    animate={habit.streak >= 3 ? {
+                      scale: [1, 1, 1],
+                      textShadow: [
+                        '0 0 4px #ff9900',
+                        '0 0 8px #ff9900',
+                        '0 0 4px #ff9900'
+                      ]
+                    } : {}}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 1.5 
+                    }}>
                   <div className="text-2xl font-bold">{habit.streak}</div>
+                  </motion.div>
                   <div className="text-sm">Streak</div>
                 </div>
                 <div>
