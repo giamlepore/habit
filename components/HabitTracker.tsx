@@ -426,6 +426,20 @@ export default function HabitTracker() {
               calendar: {}
             })}
           </div>
+          <motion.button
+            className="w-full mt-4 p-2 rounded-full bg-green-500 text-white font-semibold"
+            onClick={() => signIn()}
+            whileTap={{ scale: 0.95 }}
+            animate={{
+              boxShadow: ['0 0 0 0 rgba(34, 197, 94, 0.7)', '0 0 0 10px rgba(34, 197, 94, 0)'],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 1.5,
+            }}
+          >
+            Começar agora
+          </motion.button>
         </div>
       </div>
     )
