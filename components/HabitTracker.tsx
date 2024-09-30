@@ -374,13 +374,59 @@ export default function HabitTracker() {
 
   if (!session) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => signIn()}
-        >
-          Sign in
-        </button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
+        <h1 className="mb-8 text-4xl font-bold text-white text-center" style={{ fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji' }}>
+          Um novo jeito de acompanhar seus hábitos
+        </h1>
+        <div className="p-6 rounded-lg shadow-lg bg-gray-800 text-white">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <span>🔥</span>
+              <span className="font-semibold">Criar novos hábitos</span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <motion.button
+                className="w-8 h-8 rounded-full border-2 flex items-center justify-center border-green-500"
+                onClick={() => signIn()}
+                whileTap={{ scale: 0.8 }}
+                animate={{
+                  boxShadow: ['0 0 0 0 rgba(34, 197, 94, 0.7)', '0 0 0 10px rgba(34, 197, 94, 0)'],
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 1.5,
+                }}
+              >
+                <span className="text-green-500"></span>
+              </motion.button>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-center mb-4">
+            <div>
+              <div className="text-2xl font-bold">0</div>
+              <div className="text-sm">Sequência</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">0%</div>
+              <div className="text-sm">Consistência</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">0</div>
+              <div className="text-sm">Check-ins</div>
+            </div>
+          </div>
+          <div className="text-black">
+            {renderCalendar({
+              id: 'new',
+              name: 'Criar novos hábitos',
+              icon: '➕',
+              streak: 0,
+              consistency: 0,
+              checkIns: 0,
+              calendar: {}
+            })}
+          </div>
+        </div>
       </div>
     )
   }
