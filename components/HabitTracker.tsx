@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon, Sun, Moon, BarChart2 } from 'lucide-react'
+import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon, Sun, Moon, BarChart2, SmileIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from 'date-fns'
 import confetti from 'canvas-confetti'
 import { Line } from 'react-chartjs-2'
+import EmotionTracker from './EmotionTracker'
+import EmotionChart from './EmotionChart'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -465,6 +467,43 @@ export default function HabitTracker() {
             >
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+            <Dialog.Root>
+              <Dialog.Trigger asChild>
+                <motion.button
+                  className={`p-2 rounded-full ${darkMode ? 'bg-gray-700/80 hover:bg-gray-600/80' : 'bg-gray-400/80 hover:bg-gray-300/80'} backdrop-blur-sm transition-colors`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <SmileIcon className="h-5 w-5" />
+                </motion.button>
+              </Dialog.Trigger>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity" />
+                <Dialog.Content
+                  className={`fixed inset-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 ${
+                    darkMode ? 'bg-gray-800/90 text-white' : 'bg-white/90 text-black'
+                  } p-6 sm:p-8 rounded-2xl shadow-2xl w-full sm:w-11/12 sm:max-w-3xl h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto transition-all backdrop-blur-md`}
+                >
+                  <Dialog.Title className="text-3xl font-extrabold mb-6 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">Rastreador de Emoções</Dialog.Title>
+                  <div className="space-y-10 h-full">
+                    <EmotionTracker />
+                    <EmotionChart />
+                  </div>
+                  <Dialog.Close asChild>
+                    <motion.button
+                      className="absolute top-4 right-4 p-2 rounded-full bg-gray-200/80 text-gray-800 hover:bg-gray-300/80 transition-colors"
+                      aria-label="Close"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </motion.button>
+                  </Dialog.Close>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
             <button
               className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-400 hover:bg-gray-300'}`}
               onClick={() => setShowStatsModal(true)}
@@ -516,6 +555,7 @@ export default function HabitTracker() {
             </button>
           </div>
         </header>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {habits.map(habit => (
             <div key={habit.id} className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
@@ -661,6 +701,7 @@ export default function HabitTracker() {
             </div>
           ))}
         </div>
+      
       </div>
       <Dialog.Root open={showStatsModal} onOpenChange={setShowStatsModal}>
         <Dialog.Portal>
