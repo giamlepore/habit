@@ -252,9 +252,9 @@ export default function HabitTracker() {
             value={calendarView}
             onChange={(e) => setCalendarView(e.target.value as 'week' | 'month' | 'year')}
           >
-            <option value="week">Week</option>
-            <option value="month">Month</option>
-            <option value="year">Year</option>
+            <option value="week">Semana</option>
+            <option value="month">Mês</option>
+            <option value="year">Ano</option>
           </select>
           <button
             className="p-1 rounded-full text-black hover:bg-gray-200"
@@ -306,11 +306,11 @@ export default function HabitTracker() {
           </div>
           <div className="flex items-center">
             <div className="h-3 w-3 bg-red-500 bg-opacity-50 rounded-full mr-1"></div>
-            Miss
+            Não fiz
           </div>
           <div className="flex items-center">
             <div className="h-3 w-3 bg-gray-500 rounded-full mr-1"></div>
-            Day-off
+            Dia off
           </div>
         </div>
       </div>
@@ -347,7 +347,7 @@ export default function HabitTracker() {
       labels,
       datasets: [
         {
-          label: 'Completed Habits',
+          label: 'Hábitos Concluídos',
           data,
           fill: false,
           borderColor: 'rgb(75, 192, 192)',
@@ -364,7 +364,7 @@ export default function HabitTracker() {
         },
         title: {
           display: true,
-          text: 'Completed Habits Over Time'
+          text: 'Hábitos Concluídos por dia'
         }
       }
     }
@@ -457,7 +457,7 @@ export default function HabitTracker() {
     <div className={`min-h-screen p-8 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">{habits.length} HABITS</h1>
+          <h1 className="text-2xl font-bold">{habits.length} HÁBITOS</h1>
           <div className="flex gap-2">
             <button
               className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-400 hover:bg-gray-300'}`}
@@ -480,16 +480,16 @@ export default function HabitTracker() {
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
                 <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl`}>
-                  <Dialog.Title className="text-lg font-bold mb-4">Add New Habit</Dialog.Title>
+                  <Dialog.Title className="text-lg font-bold mb-4">Adicionar novo hábito</Dialog.Title>
                   <input
                     className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
-                    placeholder="Habit name"
+                    placeholder="Nome do hábito"
                     value={newHabit.name}
                     onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
                   />
                   <input
                     className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
-                    placeholder="Habit icon (emoji)"
+                    placeholder="Ícone do hábito (emoji)"
                     value={newHabit.icon}
                     onChange={(e) => setNewHabit({ ...newHabit, icon: e.target.value })}
                   />
@@ -497,12 +497,12 @@ export default function HabitTracker() {
                     className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                     onClick={addHabit}
                   >
-                    Add Habit
+                    Adicionar Hábito
                   </button>
                   {showSuccessMessage && (
                     <div className="mt-4 p-2 bg-green-500 text-white rounded flex items-center justify-center">
                       <Check className="h-4 w-4 mr-2" />
-                      Habit added successfully!
+                      Habit adicionado com sucesso!
                     </div>
                   )}
                 </Dialog.Content>
@@ -644,13 +644,13 @@ export default function HabitTracker() {
                     }}>
                   <div className="text-2xl font-bold">{habit.streak}</div>
                   </motion.div>
-                  <div className="text-sm">Streak</div>
+                  <div className="text-sm">Sequência</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold">
                     {loadingConsistency ? <div className="loader"></div> : `${habit.consistency}%`}
                   </div>
-                  <div className="text-sm">Consistency</div>
+                  <div className="text-sm">Consistência</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold">{habit.checkIns}</div>
@@ -666,16 +666,16 @@ export default function HabitTracker() {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
           <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl w-11/12 max-w-4xl`}>
-            <Dialog.Title className="text-lg font-bold mb-4">Habit Statistics</Dialog.Title>
+            <Dialog.Title className="text-lg font-bold mb-4">Estatísticas dos Hábitos</Dialog.Title>
             <div className="mb-4">
               <select
                 className={`inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75`}
                 value={calendarView}
                 onChange={(e) => setCalendarView(e.target.value as 'week' | 'month' | 'year')}
               >
-                <option value="week">Week</option>
-                <option value="month">Month</option>
-                <option value="year">Year</option>
+                <option value="week">Semana</option>
+                <option value="month">Mês</option>
+                <option value="year">Ano</option>
               </select>
             </div>
             {renderStatsChart()}
@@ -683,7 +683,7 @@ export default function HabitTracker() {
               className="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() => setShowStatsModal(false)}
             >
-              Close
+              Fechar
             </button>
           </Dialog.Content>
         </Dialog.Portal>
