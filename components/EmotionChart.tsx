@@ -103,7 +103,7 @@ export default function EmotionChart() {
               tooltipLines = [
                 `Nota: ${emotion.intensity}`,
                 `Emoção: ${emotion.emotion}`,
-                `Notas: ${emotion.note || 'Nenhuma'}`,
+                `Anotações: ${emotion.note || 'Nenhuma'}`,
                 'Hábitos concluídos:'
               ];
               if (completedHabits.length > 0) {
@@ -117,11 +117,27 @@ export default function EmotionChart() {
             return tooltipLines;
           }
         },
-        bodySpacing: 6,
-        padding: 10
+        bodySpacing: 8,
+        padding: 12,
+        displayColors: false,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        titleFont: {
+          size: 14,
+          weight: 'bold'
+        },
+        bodyFont: {
+          size: 13
+        },
+        cornerRadius: 6,
+        caretSize: 10,
+        intersect: false,
+        mode: 'index',
+        itemSort: null,
+        filter: null,
+        position: 'nearest'
       }
     }
   }
 
-  return <Line data={chartData} options={options} />
+  return <Line data={chartData} options={options as any} />
 }

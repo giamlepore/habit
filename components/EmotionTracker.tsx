@@ -107,7 +107,7 @@ export default function EmotionTracker() {
             style={{
               WebkitAppearance: 'none',
               background: 'linear-gradient(to right, #FF4136, #FFDC00, #2ECC40)',
-              height: '12px',
+              height: '14px',
               borderRadius: '6px',
             }}
           />
@@ -155,7 +155,7 @@ export default function EmotionTracker() {
           </div>
 
           <div className="mb-4">
-            <label className="block mb-2">Nota para o seu dia</label>
+            <label className="block mb-2">Nota para o seu dia <span className="float-right">{intensity}</span></label>
             <input
               type="range"
               min="1"
@@ -167,7 +167,7 @@ export default function EmotionTracker() {
           </div>
 
           <div className="mb-4">
-            <label className="block mb-2">Notas</label>
+            <label className="block mb-2">Anotações</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}

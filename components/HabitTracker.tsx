@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon, Sun, Moon, BarChart2, SmileIcon } from 'lucide-react'
+import { Settings, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Check, ChevronUpCircle, LogOutIcon, Sun, Moon, BarChart2, SmileIcon, MoreVertical, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Select from '@radix-ui/react-select'
@@ -19,6 +19,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
+import ContributionGraph from './ContribuitionGraph'
 
 ChartJS.register(
   CategoryScale,
@@ -50,13 +51,16 @@ export default function HabitTracker() {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
   const [calendarView, setCalendarView] = useState<'week' | 'month' | 'year'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(true)
   const [loadingConsistency, setLoadingConsistency] = useState(false)
   const [showStatsModal, setShowStatsModal] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
   const [showSpecialDay, setShowSpecialDay] = useState(false)
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const [collapsedHabits, setCollapsedHabits] = useState<Record<string, boolean>>({})
+  const [addDayHabit, setAddDayHabit] = useState<Habit | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
 
   useEffect(() => {
     if (session) {
@@ -287,8 +291,8 @@ export default function HabitTracker() {
                   status === 'check-in' ? 'bg-green-500' :
                   status === 'special' ? 'bg-green-500 animate-pulse' :
                   status === 'miss' ? 'bg-red-500 bg-opacity-50' :
-                  status === 'day-off' ? 'bg-gray-500' :
-                  'bg-gray-200'
+                  status === 'day-off' ? 'bg-gray-100/50' :
+                  'bg-gray-100/50'
                 } ${isToday(date) ? 'font-bold' : ''}`}
                 onClick={() => toggleCheckIn(habit, dateString)}
               >
@@ -374,6 +378,13 @@ export default function HabitTracker() {
     return <Line data={chartData} options={options} />
   }
 
+  const toggleCollapse = (habitId: string) => {
+    setCollapsedHabits(prev => ({
+      ...prev,
+      [habitId]: !prev[habitId]
+    }))
+  }
+
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
@@ -409,7 +420,7 @@ export default function HabitTracker() {
               <div className="text-sm">Sequência</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">0%</div>
+              <div className="text-2xl font-bold">0<span className="text-xs">%</span></div>
               <div className="text-sm">Consistência</div>
             </div>
             <div>
@@ -456,10 +467,10 @@ export default function HabitTracker() {
   };
 
   return (
-    <div className={`min-h-screen p-8 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
+    <div className={`min-h-screen p-4 sm:p-8 ${darkMode ? 'bg-[#242933] text-white' : 'bg-gray-100 text-black'}`}>
       <div className="max-w-4xl mx-auto">
-        <header className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">{habits.length} HÁBITOS</h1>
+        <header className="flex justify-between items-center mb-4 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#A6ADBA]">{habits.length} HÁBITOS</h1>
           <div className="flex gap-2">
             <button
               className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-400 hover:bg-gray-300'}`}
@@ -480,18 +491,17 @@ export default function HabitTracker() {
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity" />
                 <Dialog.Content
-                  className={`fixed inset-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 ${
+                  className={`fixed inset-0 ${
                     darkMode ? 'bg-gray-800/90 text-white' : 'bg-white/90 text-black'
-                  } p-6 sm:p-8 rounded-2xl shadow-2xl w-full sm:w-11/12 sm:max-w-3xl h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto transition-all backdrop-blur-md`}
+                  } p-4 sm:p-6 overflow-y-auto transition-all backdrop-blur-md`}
                 >
-                  <Dialog.Title className="text-3xl font-extrabold mb-6 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">Rastreador de Emoções</Dialog.Title>
-                  <div className="space-y-10 h-full">
+                  <div className="space-y-8 h-full">
                     <EmotionTracker />
                     <EmotionChart />
                   </div>
                   <Dialog.Close asChild>
                     <motion.button
-                      className="absolute top-4 right-4 p-2 rounded-full bg-gray-200/80 text-gray-800 hover:bg-gray-300/80 transition-colors"
+                      className="absolute top-2 right-2 p-2 rounded-full bg-gray-200/80 text-gray-800 hover:bg-gray-300/80 transition-colors"
                       aria-label="Close"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -556,18 +566,53 @@ export default function HabitTracker() {
           </div>
         </header>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8">
           {habits.map(habit => (
-            <div key={habit.id} className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
-              <div className="flex justify-between items-center mb-4">
+            <div key={habit.id} className={`p-4 sm:p-6 rounded-lg shadow ${darkMode ? 'bg-gray-700/25 text-white' : 'bg-white text-black'}`}>
+              <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-2">
+                  <Dialog.Root>
+                    <Dialog.Trigger asChild>
+                      <button className="p-1 rounded-full hover:bg-gray-200/20">
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </Dialog.Trigger>
+                    <Dialog.Portal>
+  <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+  <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-700/25' : 'bg-white'} p-4 rounded-lg shadow-xl min-w-[200px]`}>
+    <div className="flex flex-col gap-2">
+      <button
+        className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left`}
+        onClick={() => setEditingHabit(habit)}
+      >
+        <Pencil className="h-4 w-4" />
+        <span>Editar</span>
+      </button>
+      <button
+        className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left`}
+        onClick={() => setAddDayHabit(habit)}
+      >
+        <Calendar className="h-4 w-4" />
+        <span>Adicionar um Dia</span>
+      </button>
+      <button
+        className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left text-red-500`}
+        onClick={() => setHabitToDelete(habit)}
+      >
+        <Trash2 className="h-4 w-4" />
+        <span>Excluir</span>
+      </button>
+    </div>
+  </Dialog.Content>
+</Dialog.Portal>
+                  </Dialog.Root>
                   <span>{habit.icon}</span>
-                  <span className="font-semibold">{habit.name}</span>
-                  {habit.time && <span className="text-sm">{habit.time}</span>}
+                  <span className={`font-semibold text-lg ${darkMode ? 'text-[#A6ADBA]' : ''}`}>{habit.name}</span>
+                  {habit.time && <span className={`text-sm ${darkMode ? 'text-[#A6ADBA]' : ''}`}>{habit.time}</span>}
                 </div>
                 <div className="flex gap-2 items-center">
                   <motion.button
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                    className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center ${
                       habit.calendar[new Date().toISOString().split('T')[0]] === 'check-in'
                         ? 'bg-green-500 border-green-500'
                         : habit.calendar[new Date().toISOString().split('T')[0]] === 'special'
@@ -595,109 +640,50 @@ export default function HabitTracker() {
                   >
                     {(habit.calendar[new Date().toISOString().split('T')[0]] === 'check-in' || 
                       habit.calendar[new Date().toISOString().split('T')[0]] === 'special') && (
-                      <Check className="h-4 w-4 text-white" />
+                      <Check className="h-6 w-6 text-white" />
                     )}
                   </motion.button>
-                  <Dialog.Root open={editingHabit?.id === habit.id} onOpenChange={(open) => setEditingHabit(open ? habit : null)}>
-                    <Dialog.Trigger asChild>
-                      <button className="p-1 rounded-full hover:bg-gray-100">
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    </Dialog.Trigger>
-                    <Dialog.Portal>
-                      <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-                      <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl`}>
-                        <Dialog.Title className="text-lg font-bold mb-4">Edit Habit</Dialog.Title>
-                        <input
-                          className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
-                          placeholder="Habit name"
-                          value={editingHabit?.name || ''}
-                          onChange={(e) => setEditingHabit(prev => prev ? { ...prev, name: e.target.value } : null)}
-                        />
-                        <input
-                          className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
-                          placeholder="Habit icon (emoji)"
-                          value={editingHabit?.icon || ''}
-                          onChange={(e) => setEditingHabit(prev => prev ? { ...prev, icon: e.target.value } : null)}
-                        />
-                        <button
-                          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                          onClick={() => editingHabit && editHabit(editingHabit)}
-                        >
-                          Save Changes
-                        </button>
-                      </Dialog.Content>
-                    </Dialog.Portal>
-                  </Dialog.Root>
-                  <Dialog.Root>
-                    <Dialog.Trigger asChild>
-                      <button
-                        className="p-1 rounded-full hover:bg-gray-100"
-                        onClick={() => setHabitToDelete(habit)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </Dialog.Trigger>
-                    <Dialog.Portal>
-                      <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-                      <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl`}>
-                        <Dialog.Title className="text-lg font-bold mb-4">Delete Habit</Dialog.Title>
-                        <p>Are you sure you want to delete this habit?</p>
-                        <div className="mt-4 flex justify-end gap-2">
-                          <button
-                            className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
-                            onClick={() => setHabitToDelete(null)}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                            onClick={() => {
-                              if (habitToDelete) {
-                                removeHabit(habitToDelete.id)
-                              }
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </Dialog.Content>
-                    </Dialog.Portal>
-                  </Dialog.Root>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4 text-center mb-4">
-                <div>
-                  <motion.div 
-                    className={`text-2xl font-bold ${habit.streak >= 3 ? 'text-orange-500' : ''}`}
-                    animate={habit.streak >= 3 ? {
-                      scale: [1, 1, 1],
-                      textShadow: [
-                        '0 0 4px #ff9900',
-                        '0 0 8px #ff9900',
-                        '0 0 4px #ff9900'
-                      ]
-                    } : {}}
-                    transition={{ 
-                      repeat: Infinity, 
-                      duration: 1.5 
-                    }}>
-                  <div className="text-2xl font-bold">{habit.streak}</div>
-                  </motion.div>
-                  <div className="text-sm">Sequência</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">
-                    {loadingConsistency ? <div className="loader"></div> : `${habit.consistency}%`}
+              {!collapsedHabits[habit.id] && (
+                <>
+                  <div className="grid grid-cols-3 gap-4 text-center mb-8">
+                    <div>
+                      <div className={`text-3xl font-bold ${habit.streak >= 3 ? 'text-orange-500' : darkMode ? 'text-[#A6ADBA]' : ''}`}>
+                        {habit.streak}
+                      </div>
+                      <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Sequência</div>
+                    </div>
+                    <div>
+                      <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`}>
+                        {loadingConsistency ? <div className="loader"></div> : <>{habit.consistency}<span className="text-xs"> %</span></>}
+                      </div>
+                      <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Consistência</div>
+                    </div>
+                    <div>
+                      <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`}>{habit.checkIns}</div>
+                      <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Check-ins</div>
+                    </div>
                   </div>
-                  <div className="text-sm">Consistência</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{habit.checkIns}</div>
-                  <div className="text-sm">Check-ins</div>
-                </div>
-              </div>
-              {renderCalendar(habit)}
+                  <ContributionGraph habit={habit} />
+                </>
+              )}
+              <button
+                onClick={() => toggleCollapse(habit.id)}
+                className="w-full mt-4 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700"
+              >
+                {collapsedHabits[habit.id] ? (
+                  <>
+                    <ChevronUpCircle className="h-4 w-4 rotate-180" />
+                    Expandir
+                  </>
+                ) : (
+                  <>
+                    <ChevronUpCircle className="h-4 w-4 transform" />
+                    Diminuir
+                  </>
+                )}
+              </button>
             </div>
           ))}
         </div>
@@ -748,6 +734,116 @@ export default function HabitTracker() {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Edit Habit Modal */}
+      <Dialog.Root open={editingHabit !== null} onOpenChange={() => setEditingHabit(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+          <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl w-96`}>
+            <Dialog.Title className="text-lg font-bold mb-4">Editar Hábito</Dialog.Title>
+            {editingHabit && (
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                editHabit(editingHabit)
+              }}>
+                <input
+                  className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`}
+                  placeholder="Nome do hábito"
+                  value={editingHabit.name}
+                  onChange={(e) => setEditingHabit({ ...editingHabit, name: e.target.value })}
+                />
+                <input
+                  className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`}
+                  placeholder="Ícone do hábito (emoji)"
+                  value={editingHabit.icon}
+                  onChange={(e) => setEditingHabit({ ...editingHabit, icon: e.target.value })}
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                    onClick={() => setEditingHabit(null)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </form>
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog.Root open={habitToDelete !== null} onOpenChange={() => setHabitToDelete(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+          <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl w-96`}>
+            <Dialog.Title className="text-lg font-bold mb-4">Confirmar Exclusão</Dialog.Title>
+            <p className="mb-4">Tem certeza que deseja excluir o hábito "{habitToDelete?.name}"?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                onClick={() => setHabitToDelete(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                onClick={() => habitToDelete && removeHabit(habitToDelete.id)}
+              >
+                Excluir
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Add Day Modal */}
+      <Dialog.Root open={addDayHabit !== null} onOpenChange={() => setAddDayHabit(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+          <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl w-96`}>
+            <Dialog.Title className="text-lg font-bold mb-4">Adicionar um Dia</Dialog.Title>
+            {addDayHabit && (
+              <div>
+                <div className="mb-4">
+                  <label className="block text-sm mb-2">Selecione a data</label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                    onClick={() => setAddDayHabit(null)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    onClick={() => {
+                      if (addDayHabit) {
+                        toggleCheckIn(addDayHabit, selectedDate);
+                        setAddDayHabit(null);
+                      }
+                    }}
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              </div>
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
