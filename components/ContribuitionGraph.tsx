@@ -133,15 +133,15 @@ export default function ContributionGraph({ habit, darkMode }: ContributionGraph
       <div className="flex items-center gap-2 mt-4 text-xs text-gray-500">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-sm bg-[#E5E6E6] dark:bg-[rgba(32,36,44,0.565)]" />
-          <span>Sem registro</span>
+          <span>Não preenchido</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-sm bg-red-300/50" />
-          <span>Faltou</span>
+          <span>Não fiz</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-sm bg-green-500" />
-          <span>Check-in</span>
+          <span>Fiz</span>
         </div>
       </div>
     </div>

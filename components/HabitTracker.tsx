@@ -482,7 +482,7 @@ export default function HabitTracker() {
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <Dialog.Root>
-              <Dialog.Trigger asChild>
+              {/* <Dialog.Trigger asChild>
                 <motion.button
                   className={`p-2 rounded-full ${darkMode ? 'bg-gray-700/80 hover:bg-gray-600/80' : 'bg-gray-400/80 hover:bg-gray-300/80'} backdrop-blur-sm transition-colors`}
                   whileHover={{ scale: 1.05 }}
@@ -490,7 +490,7 @@ export default function HabitTracker() {
                 >
                   <SmileIcon className="h-5 w-5" />
                 </motion.button>
-              </Dialog.Trigger>
+              </Dialog.Trigger> */}
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity" />
                 <Dialog.Content
@@ -626,7 +626,7 @@ export default function HabitTracker() {
                     </Dialog.Trigger>
                     <Dialog.Portal>
   <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-  <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-700/25' : 'bg-white'} p-4 rounded-lg shadow-xl min-w-[200px]`}>
+  <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-700' : 'bg-white'} p-4 rounded-lg shadow-xl min-w-[200px]`}>
     <div className="flex flex-col gap-2">
       <button
         className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left`}
