@@ -615,8 +615,8 @@ export default function HabitTracker() {
         
         <div className="grid grid-cols-1 gap-6 sm:gap-8">
           {habits.map(habit => (
-            <div key={habit.id} className={`px-8 py-8 sm:px-8 sm:py-8 rounded-xl shadow ${darkMode ? 'bg-gray-700/25 text-white' : 'bg-white text-black'}`}>
-              <div className="flex justify-between items-center mb-8">
+            <div key={habit.id} className={`px-8 ${!collapsedHabits[habit.id] ? 'py-8' : 'py-4'} sm:px-8 rounded-xl shadow ${darkMode ? 'bg-gray-700/25 text-white' : 'bg-white text-black'}`}>
+              <div className={`flex justify-between items-center ${!collapsedHabits[habit.id] ? 'mb-8' : 'mb-0'}`}>
                 <div className="flex items-center gap-2">
                   <Dialog.Root>
                     <Dialog.Trigger asChild>
