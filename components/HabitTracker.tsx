@@ -291,7 +291,7 @@ export default function HabitTracker() {
                   status === 'check-in' ? 'bg-green-500' :
                   status === 'special' ? 'bg-green-600' :
                   status === 'miss' ? 'bg-red-300' :
-                  status === 'day-off' ? 'bg-gray-400' :
+                  status === 'day-off' ? 'bg-[#E5E6E6] dark:bg-[rgba(32,36,44,0.565)]' :
                   'bg-[#E5E6E6] dark:bg-[rgba(32,36,44,0.565)]'
                 } ${isToday(date) ? 'font-bold' : ''}`}
                 onClick={() => toggleCheckIn(habit, dateString)}
