@@ -45,9 +45,9 @@ export default function ContributionGraph({ habit }: ContributionGraphProps) {
       case 'miss':
         return 'bg-red-300/50'
       case 'day-off':
-        return 'bg-[#20242C90]'
+        return 'dark:bg-[#20242C90] bg-[#E5E6E6]'
       default:
-        return 'bg-[#20242C90]'
+        return 'dark:bg-[#20242C90] bg-[#E5E6E6]'
     }
   }
 
