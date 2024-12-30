@@ -289,10 +289,10 @@ export default function HabitTracker() {
                 key={dateString}
                 className={`h-6 w-full rounded ${
                   status === 'check-in' ? 'bg-green-500' :
-                  status === 'special' ? 'bg-green-500 animate-pulse' :
-                  status === 'miss' ? 'bg-red-500 bg-opacity-50' :
-                  status === 'day-off' ? 'bg-gray-100/50' :
-                  'bg-gray-100/50'
+                  status === 'special' ? 'bg-green-600' :
+                  status === 'miss' ? 'bg-red-300' :
+                  status === 'day-off' ? 'bg-gray-400' :
+                  'bg-[#E5E6E6] dark:bg-[rgba(32,36,44,0.565)]'
                 } ${isToday(date) ? 'font-bold' : ''}`}
                 onClick={() => toggleCheckIn(habit, dateString)}
               >
