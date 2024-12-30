@@ -20,6 +20,7 @@ import {
   Legend,
 } from 'chart.js'
 import ContributionGraph from './ContribuitionGraph'
+import RecentActivities from './RecentActivities'
 
 ChartJS.register(
   CategoryScale,
@@ -42,6 +43,19 @@ interface Habit {
   calendar: Record<string, 'check-in' | 'miss' | 'day-off' | 'special' | null>
 }
 
+interface Activity {
+  id: string
+  habitId: string
+  habitName: string
+  habitIcon: string
+  completedAt: string
+  type: 'check-in' | 'special'
+  userName: string
+  user: {
+    image: string | null
+  }
+}
+
 const DAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
 export default function HabitTracker() {
@@ -62,10 +76,12 @@ export default function HabitTracker() {
   const [addDayHabit, setAddDayHabit] = useState<Habit | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [allCollapsed, setAllCollapsed] = useState(false)
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([])
 
   useEffect(() => {
     if (session) {
       fetchHabits()
+      fetchActivities()
     }
   }, [session])
 
@@ -84,6 +100,21 @@ export default function HabitTracker() {
     if (response.ok) {
       const data = await response.json()
       setHabits(data)
+    }
+  }
+
+  const fetchActivities = async () => {
+    try {
+      const response = await fetch('/api/activities')
+      if (response.ok) {
+        const data = await response.json()
+        setRecentActivities(data)
+      } else if (response.status === 401) {
+        // Opcional: redirecionar para login ou mostrar mensagem
+        console.log('Usuário não autenticado')
+      }
+    } catch (error) {
+      console.error('Erro ao buscar atividades:', error)
     }
   }
 
@@ -147,10 +178,35 @@ export default function HabitTracker() {
   const toggleTodayCheckIn = async (habit: Habit, isSpecial: boolean = false) => {
     const today = new Date().toISOString().split('T')[0]
     const newCalendar = { ...habit.calendar }
+    
     if (newCalendar[today] === 'check-in' || newCalendar[today] === 'special') {
       delete newCalendar[today]
     } else {
       newCalendar[today] = isSpecial ? 'special' : 'check-in'
+      // Adiciona atividade
+      const activity = {
+        habitId: habit.id,
+        habitName: habit.name,
+        habitIcon: habit.icon,
+        completedAt: new Date().toISOString(),
+        type: isSpecial ? 'special' : 'check-in',
+        userName: session?.user?.name || 'Usuário',
+        userId: session?.user?.id,
+        user: {
+          image: session?.user?.image || null
+        }
+      }
+      
+      const response = await fetch('/api/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(activity)
+      })
+      
+      if (response.ok) {
+        const newActivity = await response.json()
+        setRecentActivities(prev => [newActivity, ...prev])
+      }
     }
 
     const updatedHabit = { ...habit, calendar: newCalendar }
@@ -614,6 +670,11 @@ export default function HabitTracker() {
         </header>
         
         <div className="grid grid-cols-1 gap-6 sm:gap-8">
+          <RecentActivities 
+            activities={recentActivities}
+            darkMode={darkMode}
+          />
+
           {habits.map(habit => (
             <div key={habit.id} className={`px-8 ${!collapsedHabits[habit.id] ? 'py-8' : 'py-4'} sm:px-8 rounded-xl shadow ${darkMode ? 'bg-gray-700/25 text-white' : 'bg-white text-black'}`}>
               <div className={`flex justify-between items-center ${!collapsedHabits[habit.id] ? 'mb-8' : 'mb-0'}`}>
