@@ -47,7 +47,7 @@ export default function ContributionGraph({ habit }: ContributionGraphProps) {
       case 'day-off':
         return 'bg-gray-400'
       default:
-        return 'bg-gray-100/50 dark:bg-gray-900/50'
+        return 'bg-[#E5E6E6] dark:bg-[rgba(32,36,44,0.565)]'
     }
   }
 
@@ -67,7 +67,7 @@ export default function ContributionGraph({ habit }: ContributionGraphProps) {
             ))}
           </div>
           <div className="flex">
-            <div className="flex-none mr-2 md:mr-10" style={{ position: 'sticky', left: 0, background: 'inherit' }}>
+            <div className="flex-none mr-2 md:mr-10 rounded-lg bg-gray-700/25 dark:bg-gray-700/25" style={{ position: 'sticky', left: 0 }}>
               {WEEKDAYS.map(day => (
                 <div key={day} className="h-3 text-[8px] text-gray-500 leading-3 mb-0.5">
                   {day[0]}
@@ -113,7 +113,7 @@ export default function ContributionGraph({ habit }: ContributionGraphProps) {
 
       <div className="flex items-center gap-2 mt-4 text-xs text-gray-500">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-gray-100/50 dark:bg-gray-900/50" />
+          <div className="w-3 h-3 rounded-sm bg-[#E5E6E6] dark:bg-[rgba(32,36,44,0.565)]" />
           <span>Sem registro</span>
         </div>
         <div className="flex items-center gap-2">
