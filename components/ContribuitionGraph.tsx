@@ -70,8 +70,8 @@ export default function ContributionGraph({ habit, darkMode }: ContributionGraph
     <div className="w-full">
       {/* Container principal que agora inclui os dias da semana e o scroll */}
       <div className="flex">
-        {/* Coluna com as iniciais dos dias da semana - adicionado mt-6 para alinhar com os quadrados */}
-        <div className="flex-none mr-2 md:mr-10 rounded-lg mt-6">
+        {/* Coluna com as iniciais dos dias da semana - ajustado margin para desktop */}
+        <div className="flex-none mr-2 md:mr-4 rounded-lg mt-6">
           {WEEKDAYS.map(day => (
             <div key={day} className="h-3 text-[8px] text-gray-500 leading-3 mb-0.5">
               {day[0]}
@@ -80,8 +80,8 @@ export default function ContributionGraph({ habit, darkMode }: ContributionGraph
         </div>
 
         {/* Container de scroll agora começa aqui */}
-        <div className="overflow-x-auto px-4 md:px-8 lg:px-16" ref={scrollContainerRef}>
-          <div className="min-w-max">
+        <div className="overflow-x-auto md:overflow-x-visible px-2 md:px-4" ref={scrollContainerRef}>
+          <div className="min-w-max md:min-w-0">
             {/* Cabeçalho com nomes dos meses */}
             <div className="flex mb-2">
               {MONTHS.map((month, i) => (

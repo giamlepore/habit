@@ -61,6 +61,7 @@ export default function HabitTracker() {
   const [collapsedHabits, setCollapsedHabits] = useState<Record<string, boolean>>({})
   const [addDayHabit, setAddDayHabit] = useState<Habit | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
+  const [allCollapsed, setAllCollapsed] = useState(false)
 
   useEffect(() => {
     if (session) {
@@ -378,11 +379,13 @@ export default function HabitTracker() {
     return <Line data={chartData} options={options} />
   }
 
-  const toggleCollapse = (habitId: string) => {
-    setCollapsedHabits(prev => ({
-      ...prev,
-      [habitId]: !prev[habitId]
-    }))
+  const toggleAllCollapse = () => {
+    setAllCollapsed(!allCollapsed)
+    const newCollapsedState = habits.reduce((acc, habit) => ({
+      ...acc,
+      [habit.id]: !allCollapsed
+    }), {})
+    setCollapsedHabits(newCollapsedState)
   }
 
   if (!session) {
@@ -528,31 +531,75 @@ export default function HabitTracker() {
               </Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-                <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-6 rounded-lg shadow-xl`}>
-                  <Dialog.Title className="text-lg font-bold mb-4">Adicionar novo hábito</Dialog.Title>
-                  <input
-                    className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
-                    placeholder="Nome do hábito"
-                    value={newHabit.name}
-                    onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
-                  />
-                  <input
-                    className={`w-full p-2 mb-4 border rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-500'}`}
-                    placeholder="Ícone do hábito (emoji)"
-                    value={newHabit.icon}
-                    onChange={(e) => setNewHabit({ ...newHabit, icon: e.target.value })}
-                  />
-                  <button
-                    className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    onClick={addHabit}
-                  >
-                    Adicionar Hábito
-                  </button>
-                  {showSuccessMessage && (
-                    <div className="mt-4 p-2 bg-green-500 text-white rounded flex items-center justify-center">
-                      <Check className="h-4 w-4 mr-2" />
-                      Habit adicionado com sucesso!
+                <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-700/90' : 'bg-white'} p-6 rounded-lg shadow-xl w-[400px]`}>
+                  <Dialog.Title className={`text-xl font-bold mb-6 ${darkMode ? 'text-[#A6ADBA]' : ''}`}>
+                    Adicionar novo hábito
+                  </Dialog.Title>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className={`block text-sm mb-2 ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500'}`}>
+                        Nome do hábito
+                      </label>
+                      <input
+                        className={`w-full p-3 border rounded-lg ${
+                          darkMode 
+                            ? 'bg-gray-800/50 border-gray-600 text-white focus:border-gray-500' 
+                            : 'bg-white border-gray-200 text-gray-800 focus:border-gray-300'
+                        } focus:outline-none focus:ring-1 focus:ring-blue-500/30`}
+                        placeholder="Ex: Ler 10 páginas"
+                        value={newHabit.name}
+                        onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
+                      />
                     </div>
+
+                    <div>
+                      <label className={`block text-sm mb-2 ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500'}`}>
+                        Ícone (emoji)
+                      </label>
+                      <input
+                        className={`w-full p-3 border rounded-lg ${
+                          darkMode 
+                            ? 'bg-gray-800/50 border-gray-600 text-white focus:border-gray-500' 
+                            : 'bg-white border-gray-200 text-gray-800 focus:border-gray-300'
+                        } focus:outline-none focus:ring-1 focus:ring-blue-500/30`}
+                        placeholder="Ex: 📚"
+                        value={newHabit.icon}
+                        onChange={(e) => setNewHabit({ ...newHabit, icon: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex justify-end gap-3">
+                    <Dialog.Close asChild>
+                      <button 
+                        className={`px-4 py-2 rounded-lg ${
+                          darkMode 
+                            ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800/50' 
+                            : 'text-gray-600 hover:text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Cancelar
+                      </button>
+                    </Dialog.Close>
+                    <button
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      onClick={addHabit}
+                    >
+                      Adicionar Hábito
+                    </button>
+                  </div>
+
+                  {showSuccessMessage && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mt-4 p-3 bg-green-500/90 text-white rounded-lg flex items-center justify-center backdrop-blur-sm"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Hábito adicionado com sucesso!
+                    </motion.div>
                   )}
                 </Dialog.Content>
               </Dialog.Portal>
@@ -568,12 +615,12 @@ export default function HabitTracker() {
         
         <div className="grid grid-cols-1 gap-6 sm:gap-8">
           {habits.map(habit => (
-            <div key={habit.id} className={`p-4 sm:p-6 rounded-lg shadow ${darkMode ? 'bg-gray-700/25 text-white' : 'bg-white text-black'}`}>
+            <div key={habit.id} className={`px-8 py-8 sm:px-8 sm:py-8 rounded-xl shadow ${darkMode ? 'bg-gray-700/25 text-white' : 'bg-white text-black'}`}>
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-2">
                   <Dialog.Root>
                     <Dialog.Trigger asChild>
-                      <button className="p-1 rounded-full hover:bg-gray-200/20">
+                      <button className="p-4 -ml-4 rounded-full hover:bg-gray-200/20">
                         <MoreVertical className="h-4 w-4" />
                       </button>
                     </Dialog.Trigger>
@@ -649,43 +696,50 @@ export default function HabitTracker() {
                 <>
                   <div className="grid grid-cols-3 gap-4 text-center mb-8">
                     <div>
-                      <div className={`text-3xl font-bold ${habit.streak >= 3 ? 'text-orange-500' : darkMode ? 'text-[#A6ADBA]' : ''}`}>
+                      <div className={`text-3xl font-bold ${habit.streak >= 3 ? 'text-orange-500' : darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
                         {habit.streak}
                       </div>
                       <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Sequência</div>
                     </div>
                     <div>
-                      <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`}>
+                      <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
                         {loadingConsistency ? <div className="loader"></div> : <>{habit.consistency}<span className="text-xs"> %</span></>}
                       </div>
                       <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Consistência</div>
                     </div>
                     <div>
-                      <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`}>{habit.checkIns}</div>
+                      <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
+                        {habit.checkIns}
+                      </div>
                       <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Check-ins</div>
                     </div>
                   </div>
                   <ContributionGraph habit={habit} darkMode={darkMode} />
                 </>
               )}
-              <button
-                onClick={() => toggleCollapse(habit.id)}
-                className="w-full mt-4 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700"
-              >
-                {collapsedHabits[habit.id] ? (
-                  <>
-                    <ChevronUpCircle className="h-4 w-4 rotate-180" />
-                    Expandir
-                  </>
-                ) : (
-                  <>
-                    <ChevronUpCircle className="h-4 w-4 transform" />
-                    Diminuir
-                  </>
-                )}
-              </button>
             </div>
           ))}
+          
+          {habits.length > 0 && (
+            <button
+              onClick={toggleAllCollapse}
+              className={`flex items-center justify-center gap-2 p-4 rounded-lg shadow ${
+                darkMode ? 'bg-gray-700/25 text-white hover:bg-gray-700/40' : 'bg-white text-black hover:bg-gray-50'
+              } transition-colors`}
+            >
+              {allCollapsed ? (
+                <>
+                  <ChevronUpCircle className="h-5 w-5 rotate-180" />
+                  <span>Ver dados dos hábitos</span>
+                </>
+              ) : (
+                <>
+                  <ChevronUpCircle className="h-5 w-5" />
+                  <span>Ocultar dados dos hábitos</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       
       </div>
