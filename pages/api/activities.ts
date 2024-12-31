@@ -33,8 +33,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     const activity = await prisma.activity.create({
       data: {
-        ...req.body,
+        habitId: req.body.habitId,
+        habitName: req.body.habitName,
+        habitIcon: req.body.habitIcon,
+        type: req.body.type,
+        completedAt: req.body.completedAt,
+        userName: req.body.userName,
         userId: session.user.id
+      },
+      include: {
+        user: {
+          select: {
+            image: true
+          }
+        }
       }
     })
     return res.json(activity)

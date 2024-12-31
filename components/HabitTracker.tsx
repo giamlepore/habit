@@ -21,6 +21,7 @@ import {
 } from 'chart.js'
 import ContributionGraph from './ContribuitionGraph'
 import RecentActivities from './RecentActivities'
+import HabitStatsGraph from './HabitStatsGraph'
 
 ChartJS.register(
   CategoryScale,
@@ -63,7 +64,7 @@ export default function HabitTracker() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [newHabit, setNewHabit] = useState({ name: '', icon: '' })
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
-  const [calendarView, setCalendarView] = useState<'week' | 'month' | 'year'>('week')
+  const [calendarView, setCalendarView] = useState<'week' | 'month' | 'year'>('year')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [darkMode, setDarkMode] = useState(true)
   const [loadingConsistency, setLoadingConsistency] = useState(false)
@@ -77,6 +78,7 @@ export default function HabitTracker() {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [allCollapsed, setAllCollapsed] = useState(false)
   const [recentActivities, setRecentActivities] = useState<Activity[]>([])
+  const [checkingHabit, setCheckingHabit] = useState<string | null>(null)
 
   useEffect(() => {
     if (session) {
@@ -176,50 +178,55 @@ export default function HabitTracker() {
   }
 
   const toggleTodayCheckIn = async (habit: Habit, isSpecial: boolean = false) => {
+    setCheckingHabit(habit.id)
     const today = new Date().toISOString().split('T')[0]
     const newCalendar = { ...habit.calendar }
     
-    if (newCalendar[today] === 'check-in' || newCalendar[today] === 'special') {
-      delete newCalendar[today]
-    } else {
-      newCalendar[today] = isSpecial ? 'special' : 'check-in'
-      // Adiciona atividade
-      const activity = {
-        habitId: habit.id,
-        habitName: habit.name,
-        habitIcon: habit.icon,
-        completedAt: new Date().toISOString(),
-        type: isSpecial ? 'special' : 'check-in',
-        userName: session?.user?.name || 'Usuário',
-        userId: session?.user?.id,
-        user: {
-          image: session?.user?.image || null
+    try {
+      if (newCalendar[today] === 'check-in' || newCalendar[today] === 'special') {
+        delete newCalendar[today]
+      } else {
+        newCalendar[today] = isSpecial ? 'special' : 'check-in'
+        const activity = {
+          habitId: habit.id,
+          habitName: habit.name,
+          habitIcon: habit.icon,
+          completedAt: new Date().toISOString(),
+          type: isSpecial ? 'special' : 'check-in',
+          userName: session?.user?.name || 'Usuário',
+          user: {
+            connect: {
+              id: session?.user?.id
+            }
+          }
+        }
+        
+        const response = await fetch('/api/activities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(activity)
+        })
+        
+        if (response.ok) {
+          const newActivity = await response.json()
+          setRecentActivities(prev => [newActivity, ...prev])
         }
       }
-      
-      const response = await fetch('/api/activities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(activity)
-      })
-      
-      if (response.ok) {
-        const newActivity = await response.json()
-        setRecentActivities(prev => [newActivity, ...prev])
+
+      const updatedHabit = { ...habit, calendar: newCalendar }
+      updateHabitStats(updatedHabit)
+      await editHabit(updatedHabit)
+
+      if (isSpecial) {
+        setShowSpecialDay(true)
+        triggerConfetti()
+        setTimeout(() => triggerConfetti(), 500)
+        setTimeout(() => setShowSpecialDay(false), 3000)
+      } else {
+        triggerConfetti()
       }
-    }
-
-    const updatedHabit = { ...habit, calendar: newCalendar }
-    updateHabitStats(updatedHabit)
-    await editHabit(updatedHabit)
-
-    if (isSpecial) {
-      setShowSpecialDay(true)
-      triggerConfetti()
-      setTimeout(() => triggerConfetti(), 500)
-      setTimeout(() => setShowSpecialDay(false), 3000)
-    } else {
-      triggerConfetti()
+    } finally {
+      setCheckingHabit(null)
     }
   }
 
@@ -380,61 +387,6 @@ export default function HabitTracker() {
     )
   }
 
-  const renderStatsChart = () => {
-    let startDate: Date
-    let endDate: Date
-
-    switch (calendarView) {
-      case 'week':
-        startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
-        endDate = endOfWeek(currentDate, { weekStartsOn: 0 })
-        break
-      case 'month':
-        startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-        endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
-        break
-      case 'year':
-        startDate = new Date(currentDate.getFullYear(), 0, 1)
-        endDate = new Date(currentDate.getFullYear(), 11, 31)
-        break
-    }
-
-    const days = eachDayOfInterval({ start: startDate, end: endDate })
-    const labels = days.map(day => format(day, 'MMM dd'))
-    const data = days.map(day => {
-      const dateString = day.toISOString().split('T')[0]
-      return habits.filter(habit => habit.calendar[dateString] === 'check-in' || habit.calendar[dateString] === 'special').length
-    })
-
-    const chartData = {
-      labels,
-      datasets: [
-        {
-          label: 'Hábitos Concluídos',
-          data,
-          fill: false,
-          borderColor: 'rgb(75, 192, 192)',
-          tension: 0.1
-        }
-      ]
-    }
-
-    const options = {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'top' as const,
-        },
-        title: {
-          display: true,
-          text: 'Hábitos Concluídos por dia'
-        }
-      }
-    }
-
-    return <Line data={chartData} options={options} />
-  }
-
   const toggleAllCollapse = () => {
     setAllCollapsed(!allCollapsed)
     const newCollapsedState = habits.reduce((acc, habit) => ({
@@ -446,19 +398,31 @@ export default function HabitTracker() {
 
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
-        <h1 className="mb-8 text-4xl font-bold text-white text-center" style={{ fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji' }}>
-          Um novo jeito de acompanhar hábitos
-        </h1>
-        <div className="p-6 rounded-lg shadow-lg bg-gray-800 text-white">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <span>🔥</span>
-              <span className="font-semibold">Criar novos hábitos</span>
-            </div>
-            <div className="flex gap-2 items-center">
+      <div className="min-h-screen p-4 sm:p-8 bg-[#242933]">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="text-center mb-12">
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-transparent bg-clip-text mb-3" 
+              style={{ 
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+                letterSpacing: '-0.02em'
+              }}>
+              TRANSFORME SEUS HÁBITOS
+            </h1>
+            <p className="text-[#A6ADBA]/70 text-lg sm:text-xl">
+              Acompanhe sua evolução diária de forma simples e visual
+            </p>
+          </div>
+
+          <div className="px-8 py-8 rounded-xl shadow bg-gray-700/25 text-white">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-2">
+                <span>🎯</span>
+                <span className="font-semibold text-lg text-[#A6ADBA]">
+                  Criar novos hábitos
+                </span>
+              </div>
               <motion.button
-                className="w-8 h-8 rounded-full border-2 flex items-center justify-center border-green-500"
+                className="w-8 h-8 rounded-lg border-2 flex items-center justify-center border-green-500"
                 onClick={() => signIn()}
                 whileTap={{ scale: 0.8 }}
                 animate={{
@@ -469,50 +433,152 @@ export default function HabitTracker() {
                   duration: 1.5,
                 }}
               >
-                <span className="text-green-500"></span>
+                <Check className="h-6 w-6 text-green-500" />
               </motion.button>
             </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4 text-center mb-4">
-            <div>
-              <div className="text-2xl font-bold">0</div>
-              <div className="text-sm">Sequência</div>
+
+            <div className="grid grid-cols-3 gap-4 text-center mb-8">
+              <div>
+                <div className="text-3xl font-bold text-[#A6ADBA]" style={{ 
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', 
+                  letterSpacing: '-0.02em', 
+                  fontWeight: '600' 
+                }}>
+                  0
+                </div>
+                <div className="text-xs text-[#A6ADBA]/70">Sequência</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-[#A6ADBA]" style={{ 
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', 
+                  letterSpacing: '-0.02em', 
+                  fontWeight: '600' 
+                }}>
+                  0<span className="text-xs">%</span>
+                </div>
+                <div className="text-xs text-[#A6ADBA]/70">Consistência</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-[#A6ADBA]" style={{ 
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', 
+                  letterSpacing: '-0.02em', 
+                  fontWeight: '600' 
+                }}>
+                  0
+                </div>
+                <div className="text-xs text-[#A6ADBA]/70">Check-ins</div>
+              </div>
             </div>
-            <div>
-              <div className="text-2xl font-bold">0<span className="text-xs">%</span></div>
-              <div className="text-sm">Consistência</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold">0</div>
-              <div className="text-sm">Check-ins</div>
+
+            <ContributionGraph
+              habit={{
+                calendar: {}
+              }}
+              darkMode={true}
+            />
+
+            <motion.button
+              className="w-full mt-8 p-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 flex items-center justify-center gap-2"
+              onClick={() => signIn()}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <Plus className="h-5 w-5" />
+              Começar agora
+            </motion.button>
+          </div>
+
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#A6ADBA] mb-2"
+              style={{ 
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+                letterSpacing: '-0.02em'
+              }}>
+              CONSTRUA HÁBITOS EM COMUNIDADE
+            </h2>
+            <p className="text-[#A6ADBA]/70 text-base sm:text-lg">
+              Acompanhe o progresso dos seus amigos e se motive junto com eles
+            </p>
+          </div>
+
+          <div className="px-6 py-6 rounded-xl shadow bg-gray-700/25">
+            <h2 className="text-xl font-semibold mb-4 text-[#A6ADBA]" style={{ 
+              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', 
+              letterSpacing: '-0.02em', 
+              fontWeight: '600' 
+            }}>
+              Atividades Recentes
+            </h2>
+
+            <div className="space-y-4">
+              {[1, 2, 3].map((_, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-600/50" />
+                  <div className="flex-1">
+                    <div className="h-4 w-3/4 bg-gray-600/50 rounded mb-2" />
+                    <div className="h-3 w-1/2 bg-gray-600/30 rounded" />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="text-black">
-            {renderCalendar({
-              id: 'new',
-              name: 'Criar novos hábitos',
-              icon: '➕',
-              streak: 0,
-              consistency: 0,
-              checkIns: 0,
-              calendar: {}
-            })}
+
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#A6ADBA] mb-2"
+              style={{ 
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+                letterSpacing: '-0.02em'
+              }}>
+              VISUALIZE SUA EVOLUÇÃO
+            </h2>
+            <p className="text-[#A6ADBA]/70 text-base sm:text-lg">
+              Acompanhe seus hábitos com gráficos detalhados e descubra seus dias mais produtivos
+            </p>
           </div>
-          <motion.button
-            className="w-full mt-4 p-2 rounded-full bg-green-500 text-white font-semibold"
-            onClick={() => signIn()}
-            whileTap={{ scale: 0.95 }}
-            animate={{
-              boxShadow: ['0 0 0 0 rgba(34, 197, 94, 0.7)', '0 0 0 10px rgba(34, 197, 94, 0)'],
-            }}
-            transition={{
-              repeat: Infinity,
-              duration: 1.5,
-            }}
-          >
-            Começar agora
-          </motion.button>
+
+          <div className="px-6 py-6 rounded-xl shadow bg-gray-700/25">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-[#A6ADBA]" style={{ 
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', 
+                letterSpacing: '-0.02em', 
+                fontWeight: '600' 
+              }}>
+                Estatísticas dos Hábitos
+              </h2>
+              <select
+                className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium bg-gray-700 text-white hover:bg-gray-600 focus:outline-none"
+                defaultValue="year"
+              >
+                <option value="week">Semana</option>
+                <option value="month">Mês</option>
+                <option value="year">Ano</option>
+              </select>
+            </div>
+
+            <HabitStatsGraph 
+              habits={[{
+                name: 'Exemplo de Hábito',
+                calendar: {
+                  [new Date().toISOString().split('T')[0]]: 'check-in',
+                  [new Date(Date.now() - 86400000).toISOString().split('T')[0]]: 'check-in',
+                  [new Date(Date.now() - 172800000).toISOString().split('T')[0]]: 'check-in',
+                }
+              }]}
+              darkMode={true}
+              view="year"
+              currentDate={new Date()}
+            />
+          </div>
         </div>
+        <motion.button
+              className="w-full sm:w-64 mx-auto mt-8 p-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 flex items-center justify-center gap-2"
+              onClick={() => signIn()}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <Plus className="h-5 w-5" />
+              Começar agora
+            </motion.button>
       </div>
     )
   }
@@ -745,9 +811,15 @@ export default function HabitTracker() {
                     }}
                     whileTap={{ scale: 0.8 }}
                     transition={{ type: "spring", stiffness: 800, damping: 17 }}
+                    disabled={checkingHabit === habit.id}
                   >
-                    {(habit.calendar[new Date().toISOString().split('T')[0]] === 'check-in' || 
-                      habit.calendar[new Date().toISOString().split('T')[0]] === 'special') && (
+                    {checkingHabit === habit.id ? (
+                      <svg className="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (habit.calendar[new Date().toISOString().split('T')[0]] === 'check-in' || 
+                        habit.calendar[new Date().toISOString().split('T')[0]] === 'special') && (
                       <Check className="h-6 w-6 text-white" />
                     )}
                   </motion.button>
@@ -820,7 +892,12 @@ export default function HabitTracker() {
                 <option value="year">Ano</option>
               </select>
             </div>
-            {renderStatsChart()}
+            <HabitStatsGraph 
+              habits={habits}
+              darkMode={darkMode}
+              view={calendarView}
+              currentDate={currentDate}
+            />
             <button
               className="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() => setShowStatsModal(false)}
