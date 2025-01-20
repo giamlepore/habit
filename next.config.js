@@ -4,7 +4,11 @@ const withPWA = require('next-pwa')({
   skipWaiting: true,
 //   disable: process.env.NODE_ENV === 'development',
 disable: false,
-  buildExcludes: [/middleware-manifest\.json$/],
+  buildExcludes: [
+    /middleware-manifest\.json$/,
+    /app-build-manifest\.json$/,
+    /_next\/static\/development\/_buildManifest\.js$/,
+  ],
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
@@ -26,6 +30,19 @@ disable: false,
 const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com'],
+  },
+  headers: async () => {
+    return [
+      {
+        source: '/manifest.json',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/manifest+json',
+          },
+        ],
+      },
+    ]
   },
 }
 
