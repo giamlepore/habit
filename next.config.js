@@ -4,7 +4,22 @@ const withPWA = require('next-pwa')({
   skipWaiting: true,
 //   disable: process.env.NODE_ENV === 'development',
 disable: false,
-  buildExcludes: [/middleware-manifest\.json$/]
+  buildExcludes: [/middleware-manifest\.json$/],
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'offlineCache',
+        expiration: {
+          maxEntries: 200
+        }
+      }
+    }
+  ],
+  fallbacks: {
+    document: '/offline'
+  }
 })
 
 /** @type {import('next').NextConfig} */
