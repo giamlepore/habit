@@ -22,7 +22,8 @@ disable: false,
     }
   ],
   fallbacks: {
-    document: '/offline'
+    document: '/offline',
+    image: '/caracol.png'
   }
 })
 
@@ -44,6 +45,7 @@ const nextConfig = {
       },
     ]
   },
+  staticPageGenerationTimeout: 120,
 }
 
 module.exports = withPWA(nextConfig) 
