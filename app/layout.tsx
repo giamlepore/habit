@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-
+import OfflineNotification from "@/components/OfflineNotification";
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -14,8 +14,24 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Monitores seus hábitos",
+  title: "Monitore seus hábitos",
   description: "Com apenas 2 cliques, monitore seus hábitos",
+  manifest: '/manifest.json',
+  themeColor: '#242933',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: "Habit Tracker"
+  },
+  formatDetection: {
+    telephone: false
+  },
+  icons: {
+    shortcut: '/caracol.png',
+    apple: [
+      { url: '/caracol.png' }
+    ]
+  }
 };
 
 export default function RootLayout({
@@ -25,9 +41,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <OfflineNotification />
         {children}
       </body>
     </html>
