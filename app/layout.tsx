@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   title: "Monitore seus hábitos",
   description: "Com apenas 2 cliques, monitore seus hábitos",
   manifest: '/manifest.json',
-  themeColor: '#242933',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -31,6 +30,18 @@ export const metadata: Metadata = {
     apple: [
       { url: '/caracol.png' }
     ]
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  themeColor: '#242933',
+  applicationName: 'Habit Tracker',
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
   }
 };
 
@@ -41,14 +52,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
-        <meta name="theme-color" content="#242933" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <OfflineNotification />
         {children}
       </body>
