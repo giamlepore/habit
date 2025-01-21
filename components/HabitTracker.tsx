@@ -60,7 +60,7 @@ interface Activity {
 const DAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
 export default function HabitTracker() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [habits, setHabits] = useState<Habit[]>([])
   const [newHabit, setNewHabit] = useState({ name: '', icon: '' })
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
@@ -81,11 +81,11 @@ export default function HabitTracker() {
   const [checkingHabit, setCheckingHabit] = useState<string | null>(null)
 
   useEffect(() => {
-    if (session) {
+    if (status === "authenticated") {
       fetchHabits()
       fetchActivities()
     }
-  }, [session])
+  }, [status])
 
   useEffect(() => {
     setLoadingConsistency(true)
