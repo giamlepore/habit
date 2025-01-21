@@ -60,7 +60,7 @@ interface Activity {
 const DAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
 export default function HabitTracker() {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const [habits, setHabits] = useState<Habit[]>([])
   const [newHabit, setNewHabit] = useState({ name: '', icon: '' })
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
@@ -81,11 +81,11 @@ export default function HabitTracker() {
   const [checkingHabit, setCheckingHabit] = useState<string | null>(null)
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (session) {
       fetchHabits()
       fetchActivities()
     }
-  }, [status])
+  }, [session])
 
   useEffect(() => {
     setLoadingConsistency(true)
@@ -394,6 +394,13 @@ export default function HabitTracker() {
       [habit.id]: !allCollapsed
     }), {})
     setCollapsedHabits(newCollapsedState)
+  }
+
+  const toggleHabitCollapse = (habitId: string) => {
+    setCollapsedHabits(prev => ({
+      ...prev,
+      [habitId]: !prev[habitId]
+    }))
   }
 
   if (!session) {
@@ -735,50 +742,62 @@ export default function HabitTracker() {
           </div>
         </header>
         
-        <div className="grid grid-cols-1 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-8">
           <RecentActivities 
             activities={recentActivities}
             darkMode={darkMode}
           />
 
           {habits.map(habit => (
-            <div key={habit.id} className={`px-8 ${!collapsedHabits[habit.id] ? 'py-8' : 'py-4'} sm:px-8 rounded-xl shadow ${darkMode ? 'bg-gray-700/25 text-white' : 'bg-white text-black'}`}>
-              <div className={`flex justify-between items-center ${!collapsedHabits[habit.id] ? 'mb-8' : 'mb-0'}`}>
-                <div className="flex items-center gap-2">
+            <div key={habit.id} className={`px-8 sm:px-8 rounded-xl shadow ${darkMode ? 'bg-gray-700/25 text-white' : 'bg-white text-black'}`}>
+              <div className={`flex justify-between items-center py-4`}>
+                <div 
+                  className="flex items-center gap-2 flex-1 cursor-pointer p-2 rounded-lg transition-colors select-none focus:outline-none active:bg-transparent"
+                  onClick={() => toggleHabitCollapse(habit.id)}
+                >
                   <Dialog.Root>
                     <Dialog.Trigger asChild>
-                      <button className="p-4 -ml-4 rounded-full hover:bg-gray-200/20">
+                      <button className="p-4 -ml-4 rounded-full hover:bg-gray-200/20" onClick={(e) => e.stopPropagation()}>
                         <MoreVertical className="h-4 w-4" />
                       </button>
                     </Dialog.Trigger>
                     <Dialog.Portal>
-  <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-  <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-700' : 'bg-white'} p-4 rounded-lg shadow-xl min-w-[200px]`}>
-    <div className="flex flex-col gap-2">
-      <button
-        className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left`}
-        onClick={() => setEditingHabit(habit)}
-      >
-        <Pencil className="h-4 w-4" />
-        <span>Editar</span>
-      </button>
-      <button
-        className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left`}
-        onClick={() => setAddDayHabit(habit)}
-      >
-        <Calendar className="h-4 w-4" />
-        <span>Adicionar um Dia</span>
-      </button>
-      <button
-        className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left text-red-500`}
-        onClick={() => setHabitToDelete(habit)}
-      >
-        <Trash2 className="h-4 w-4" />
-        <span>Excluir</span>
-      </button>
-    </div>
-  </Dialog.Content>
-</Dialog.Portal>
+                      <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+                      <Dialog.Content className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${darkMode ? 'bg-gray-700' : 'bg-white'} p-4 rounded-lg shadow-xl min-w-[200px]`}>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingHabit(habit);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            <span>Editar</span>
+                          </button>
+                          <button
+                            className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAddDayHabit(habit);
+                            }}
+                          >
+                            <Calendar className="h-4 w-4" />
+                            <span>Adicionar um Dia</span>
+                          </button>
+                          <button
+                            className={`flex items-center gap-2 p-2 ${darkMode ? 'hover:bg-gray-600/50' : 'hover:bg-gray-100'} rounded-lg w-full text-left text-red-500`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHabitToDelete(habit);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Excluir</span>
+                          </button>
+                        </div>
+                      </Dialog.Content>
+                    </Dialog.Portal>
                   </Dialog.Root>
                   <span>{habit.icon}</span>
                   <span className={`font-semibold text-lg ${darkMode ? 'text-[#A6ADBA]' : ''}`}>{habit.name}</span>
@@ -793,7 +812,10 @@ export default function HabitTracker() {
                         ? 'bg-green-500 border-green-500 animate-pulse'
                         : 'border-gray-300'
                     }`}
-                    onClick={() => toggleTodayCheckIn(habit)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTodayCheckIn(habit);
+                    }}
                     onMouseDown={() => {
                       longPressTimerRef.current = setTimeout(() => {
                         toggleTodayCheckIn(habit, true)
@@ -825,31 +847,41 @@ export default function HabitTracker() {
                   </motion.button>
                 </div>
               </div>
-              {!collapsedHabits[habit.id] && (
-                <>
-                  <div className="grid grid-cols-3 gap-4 text-center mb-8">
-                    <div>
-                      <div className={`text-3xl font-bold ${habit.streak >= 3 ? 'text-orange-500' : darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
-                        {habit.streak}
+              <AnimatePresence>
+                {!collapsedHabits[habit.id] && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="py-4">
+                      <div className="grid grid-cols-3 gap-4 text-center mb-8">
+                        <div>
+                          <div className={`text-3xl font-bold ${habit.streak >= 3 ? 'text-orange-500' : darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
+                            {habit.streak}
+                          </div>
+                          <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Sequência</div>
+                        </div>
+                        <div>
+                          <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
+                            {loadingConsistency ? <div className="loader"></div> : <>{habit.consistency}<span className="text-xs"> %</span></>}
+                          </div>
+                          <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Consistência</div>
+                        </div>
+                        <div>
+                          <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
+                            {habit.checkIns}
+                          </div>
+                          <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Check-ins</div>
+                        </div>
                       </div>
-                      <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Sequência</div>
+                      <ContributionGraph habit={habit} darkMode={darkMode} />
                     </div>
-                    <div>
-                      <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
-                        {loadingConsistency ? <div className="loader"></div> : <>{habit.consistency}<span className="text-xs"> %</span></>}
-                      </div>
-                      <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Consistência</div>
-                    </div>
-                    <div>
-                      <div className={`text-3xl font-bold ${darkMode ? 'text-[#A6ADBA]' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.02em', fontWeight: '600' }}>
-                        {habit.checkIns}
-                      </div>
-                      <div className={`text-xs ${darkMode ? 'text-[#A6ADBA]/70' : 'text-gray-500/70'}`}>Check-ins</div>
-                    </div>
-                  </div>
-                  <ContributionGraph habit={habit} darkMode={darkMode} />
-                </>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ))}
           
